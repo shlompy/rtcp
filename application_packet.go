@@ -75,14 +75,13 @@ func (a *ApplicationDefined) Unmarshal(rawPacket []byte) error {
 	   |                   application-dependent data                ...
 	   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	*/
-	if len(rawPacket) < 12 {
-		return errPacketTooShort
-	}
-
 	header := Header{}
 	err := header.Unmarshal(rawPacket)
 	if err != nil {
 		return err
+	}
+	if len(rawPacket) < 12 {
+		return errPacketTooShort
 	}
 
 	if int(header.Length+1)*4 != len(rawPacket) {
