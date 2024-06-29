@@ -10,7 +10,7 @@ import (
 // ApplicationDefined represents an RTCP application-defined packet.
 type ApplicationDefined struct {
 	SSRC uint32
-	Name [4]byte
+	Name string
 	Data []byte
 }
 
@@ -19,13 +19,15 @@ func (a ApplicationDefined) DestinationSSRC() []uint32 {
 	return []uint32{a.SSRC}
 }
 
-// Marshal serializes the AppPacket into a byte slice with padding.
+// Marshal serializes the application-defined struct into a byte slice with padding.
 func (a ApplicationDefined) Marshal() ([]byte, error) {
 	dataLength := len(a.Data)
 	if dataLength > 0xFFFF-12 {
 		return nil, errAppDefinedDataTooLarge
 	}
-
+	if len(a.Name) != 4 {
+		return nil, errAppDefinedInvalidName
+	}
 	// Calculate the padding size to be added to make the packet length a multiple of 4 bytes.
 	paddingSize := 4 - (dataLength % 4)
 	if paddingSize == 4 {
@@ -47,7 +49,7 @@ func (a ApplicationDefined) Marshal() ([]byte, error) {
 	rawPacket := make([]byte, packetSize)
 	copy(rawPacket, headerBytes)
 	binary.BigEndian.PutUint32(rawPacket[4:8], a.SSRC)
-	copy(rawPacket[8:12], a.Name[:])
+	copy(rawPacket[8:12], a.Name)
 	copy(rawPacket[12:], a.Data)
 
 	// Add padding if necessary.
@@ -60,7 +62,7 @@ func (a ApplicationDefined) Marshal() ([]byte, error) {
 	return rawPacket, nil
 }
 
-// Unmarshal parses the given raw packet into an AppPacket, handling padding.
+// Unmarshal parses the given raw packet into an application-defined struct, handling padding.
 func (a *ApplicationDefined) Unmarshal(rawPacket []byte) error {
 	/*
 	    0                   1                   2                   3
@@ -89,7 +91,7 @@ func (a *ApplicationDefined) Unmarshal(rawPacket []byte) error {
 	}
 
 	a.SSRC = binary.BigEndian.Uint32(rawPacket[4:8])
-	copy(a.Name[:], rawPacket[8:12])
+	a.Name = string(rawPacket[8:12])
 
 	// Check for padding.
 	paddingSize := 0
