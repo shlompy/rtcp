@@ -9,9 +9,10 @@ import (
 
 // ApplicationDefined represents an RTCP application-defined packet.
 type ApplicationDefined struct {
-	SSRC uint32
-	Name string
-	Data []byte
+	SubType uint8
+	SSRC    uint32
+	Name    string
+	Data    []byte
 }
 
 // DestinationSSRC returns the SSRC value for this packet.
@@ -39,6 +40,7 @@ func (a ApplicationDefined) Marshal() ([]byte, error) {
 		Type:    TypeApplicationDefined,
 		Length:  uint16((packetSize / 4) - 1),
 		Padding: paddingSize != 0,
+		Count:   a.SubType,
 	}
 
 	headerBytes, err := header.Marshal()
@@ -90,6 +92,7 @@ func (a *ApplicationDefined) Unmarshal(rawPacket []byte) error {
 		return errAppDefinedInvalidLength
 	}
 
+	a.SubType = header.Count
 	a.SSRC = binary.BigEndian.Uint32(rawPacket[4:8])
 	a.Name = string(rawPacket[8:12])
 

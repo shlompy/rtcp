@@ -29,9 +29,29 @@ func TestTApplicationPacketUnmarshal(t *testing.T) {
 				0x41, 0x42, 0x43, 0x44,
 			},
 			Want: ApplicationDefined{
-				SSRC: 0x4baae1ab,
-				Name: "NAME",
-				Data: []byte{0x41, 0x42, 0x43, 0x44},
+				SubType: 0,
+				SSRC:    0x4baae1ab,
+				Name:    "NAME",
+				Data:    []byte{0x41, 0x42, 0x43, 0x44},
+			},
+		},
+		{
+			Name: "validCustomSsubType",
+			Data: []byte{
+				// Application Packet Type (SubType 31) + Length(0x0003)
+				0x9f, 0xcc, 0x00, 0x03,
+				// sender=0x4baae1ab
+				0x4b, 0xaa, 0xe1, 0xab,
+				// name='NAME'
+				0x4E, 0x41, 0x4D, 0x45,
+				// data='ABCD'
+				0x41, 0x42, 0x43, 0x44,
+			},
+			Want: ApplicationDefined{
+				SubType: 31,
+				SSRC:    0x4baae1ab,
+				Name:    "NAME",
+				Data:    []byte{0x41, 0x42, 0x43, 0x44},
 			},
 		},
 		{
@@ -49,9 +69,10 @@ func TestTApplicationPacketUnmarshal(t *testing.T) {
 				0x03, 0x03, 0x03,
 			},
 			Want: ApplicationDefined{
-				SSRC: 0x4baae1ab,
-				Name: "NAME",
-				Data: []byte{0x41, 0x42, 0x43, 0x44, 0x45},
+				SubType: 0,
+				SSRC:    0x4baae1ab,
+				Name:    "NAME",
+				Data:    []byte{0x41, 0x42, 0x43, 0x44, 0x45},
 			},
 		},
 		{
@@ -154,6 +175,25 @@ func TestTApplicationPacketMarshal(t *testing.T) {
 			},
 		},
 		{
+			Name: "validCustomSubType",
+			Want: []byte{
+				// Application Packet Type (SubType 31) + Length(0x0003)
+				0x9f, 0xcc, 0x00, 0x03,
+				// sender=0x4baae1ab
+				0x4b, 0xaa, 0xe1, 0xab,
+				// name='NAME'
+				0x4E, 0x41, 0x4D, 0x45,
+				// data='ABCD'
+				0x41, 0x42, 0x43, 0x44,
+			},
+			Packet: ApplicationDefined{
+				SubType: 31,
+				SSRC:    0x4baae1ab,
+				Name:    "NAME",
+				Data:    []byte{0x41, 0x42, 0x43, 0x44},
+			},
+		},
+		{
 			Name: "validWithPadding",
 			Want: []byte{
 				// Application Packet Type + Length(0x0002)  (0xA0 has padding bit set)
@@ -191,12 +231,22 @@ func TestTApplicationPacketMarshal(t *testing.T) {
 				Data: []byte{0x41, 0x42, 0x43, 0x44},
 			},
 		},
+		{
+			Name:      "InvalidSubType",
+			WantError: errInvalidHeader,
+			Packet: ApplicationDefined{
+				SubType: 32, // Must be up to 31
+				SSRC:    0x4baae1ab,
+				Name:    "NAME",
+				Data:    []byte{0x41, 0x42, 0x43, 0x44},
+			},
+		},
 	} {
 		rawPacket, err := test.Packet.Marshal()
 
 		// Check for expected errors
 		if got, want := err, test.WantError; !errors.Is(got, want) {
-			t.Fatalf("Unmarshal %q result: got = %v, want %v", test.Name, got, want)
+			t.Fatalf("Marshal %q result: got = %v, want %v", test.Name, got, want)
 		}
 		if err != nil {
 			continue
@@ -204,7 +254,7 @@ func TestTApplicationPacketMarshal(t *testing.T) {
 
 		// Check for expected successful result
 		if got, want := rawPacket, test.Want; !reflect.DeepEqual(got, want) {
-			t.Fatalf("Unmarshal %q result: got %v, want %v", test.Name, got, want)
+			t.Fatalf("Marshal %q result: got %v, want %v", test.Name, got, want)
 		}
 
 		// Check if MarshalSize() is matching the marshaled  bytes
