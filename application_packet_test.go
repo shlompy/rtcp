@@ -90,6 +90,14 @@ func TestTApplicationPacketUnmarshal(t *testing.T) {
 			},
 			WantError: errWrongPadding,
 		},
+		{
+			Name: "invalidHeader",
+			Data: []byte{
+				// Application Packet Type + invalid Length(0x00FF)
+				0xFF,
+			},
+			WantError: errPacketTooShort,
+		},
 	} {
 		var apk ApplicationDefined
 		err := apk.Unmarshal(test.Data)
@@ -103,6 +111,12 @@ func TestTApplicationPacketUnmarshal(t *testing.T) {
 		if got, want := apk, test.Want; !reflect.DeepEqual(got, want) {
 			t.Fatalf("Unmarshal %q result: got %v, want %v", test.Name, got, want)
 		}
+
+		// Check SSRC is matching
+		if apk.SSRC != 0x4baae1ab {
+			t.Fatalf("SSRC %q result: got packet SSRC %x instead of %x", test.Name, apk.SSRC, 0x4baae1ab)
+		}
+
 	}
 }
 func TestTApplicationPacketMarshal(t *testing.T) {
@@ -178,6 +192,5 @@ func TestTApplicationPacketMarshal(t *testing.T) {
 		if marshalSize != len(rawPacket) {
 			t.Fatalf("MarshalSize %q result: got %d bytes instead of %d", test.Name, len(rawPacket), marshalSize)
 		}
-
 	}
 }
