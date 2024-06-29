@@ -107,6 +107,7 @@ func (a *ApplicationDefined) Unmarshal(rawPacket []byte) error {
 	return nil
 }
 
+// MarshalSize returns the size of the packet once marshaled
 func (a *ApplicationDefined) MarshalSize() int {
 	dataLength := len(a.Data)
 	// Calculate the padding size to be added to make the packet length a multiple of 4 bytes.
