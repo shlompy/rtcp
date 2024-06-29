@@ -37,5 +37,4 @@ var (
 	errBadReadParameter         = errors.New("rtcp: cannot read into non-pointer")
 	errAppDefinedInvalidLength  = errors.New("rtcp: application defined packet type invalid length")
 	errAppDefinedDataTooLarge   = errors.New("rtcp: application defined packet data is too large")
-
 )

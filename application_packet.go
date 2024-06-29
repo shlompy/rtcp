@@ -45,7 +45,7 @@ func (a ApplicationDefined) Marshal() ([]byte, error) {
 	}
 
 	rawPacket := make([]byte, packetSize)
-	copy(rawPacket[:], headerBytes)
+	copy(rawPacket, headerBytes)
 	binary.BigEndian.PutUint32(rawPacket[4:8], a.SSRC)
 	copy(rawPacket[8:12], a.Name[:])
 	copy(rawPacket[12:], a.Data)
@@ -62,7 +62,6 @@ func (a ApplicationDefined) Marshal() ([]byte, error) {
 
 // Unmarshal parses the given raw packet into an AppPacket, handling padding.
 func (a *ApplicationDefined) Unmarshal(rawPacket []byte) error {
-
 	/*
 	    0                   1                   2                   3
 	    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -114,7 +113,5 @@ func (a *ApplicationDefined) MarshalSize() int {
 	if paddingSize == 4 {
 		paddingSize = 0
 	}
-
 	return 12 + dataLength + paddingSize
-
 }

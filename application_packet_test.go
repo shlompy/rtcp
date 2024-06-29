@@ -33,7 +33,8 @@ func TestTApplicationPacketUnmarshal(t *testing.T) {
 				Name: [4]byte{0x53, 0x55, 0x49, 0x54},
 				Data: []byte{0x41, 0x42, 0x43, 0x44},
 			},
-		}, {
+		},
+		{
 			Name: "validWithPadding",
 			Data: []byte{
 				// Application Packet Type + Length(0x0002)  (0xA0 has padding bit set)
@@ -52,7 +53,8 @@ func TestTApplicationPacketUnmarshal(t *testing.T) {
 				Name: [4]byte{0x53, 0x55, 0x49, 0x54},
 				Data: []byte{0x41, 0x42, 0x43, 0x44, 0x45},
 			},
-		}, {
+		},
+		{
 			Name: "invalidAppPacketLengthField",
 			Data: []byte{
 				// Application Packet Type + invalid Length(0x00FF)
@@ -65,7 +67,8 @@ func TestTApplicationPacketUnmarshal(t *testing.T) {
 				0x41, 0x42, 0x43, 0x44,
 			},
 			WantError: errAppDefinedInvalidLength,
-		}, {
+		},
+		{
 			Name: "invalidPacketLengthTooShort",
 			Data: []byte{
 				// Application Packet Type + Length(0x0002). Total packet length is less than 12 bytes
@@ -119,9 +122,9 @@ func TestTApplicationPacketUnmarshal(t *testing.T) {
 		if apk.SSRC != 0x4baae1ab {
 			t.Fatalf("SSRC %q result: got packet SSRC %x instead of %x", test.Name, apk.SSRC, 0x4baae1ab)
 		}
-
 	}
 }
+
 func TestTApplicationPacketMarshal(t *testing.T) {
 	for _, test := range []struct {
 		Name      string
@@ -185,12 +188,12 @@ func TestTApplicationPacketMarshal(t *testing.T) {
 			continue
 		}
 
-		// Check for expected succesful result
+		// Check for expected successful result
 		if got, want := rawPacket, test.Want; !reflect.DeepEqual(got, want) {
 			t.Fatalf("Unmarshal %q result: got %v, want %v", test.Name, got, want)
 		}
 
-		// Check if MarshalSize() is matching the marshalled bytes
+		// Check if MarshalSize() is matching the marshaled  bytes
 		marshalSize := test.Packet.MarshalSize()
 		if marshalSize != len(rawPacket) {
 			t.Fatalf("MarshalSize %q result: got %d bytes instead of %d", test.Name, len(rawPacket), marshalSize)
