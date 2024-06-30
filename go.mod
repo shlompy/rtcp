@@ -1,4 +1,4 @@
-module github.com/pion/rtcp
+module github.com/shlompy/rtcp
 
 go 1.19
 
