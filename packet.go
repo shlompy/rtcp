@@ -3,8 +3,6 @@
 
 package rtcp
 
-import "fmt"
-
 // Packet represents an RTCP packet, a protocol used for out-of-band statistics and control information for an RTP session
 type Packet interface {
 	// DestinationSSRC returns an array of SSRC values that this packet refers to.
@@ -78,10 +76,6 @@ func unmarshal(rawData []byte) (packet Packet, bytesprocessed int, err error) {
 
 	case TypeReceiverReport:
 		packet = new(ReceiverReport)
-		rrPacket := ApplicationDefined{}
-		rrPacket.Unmarshal(inPacket)
-
-		fmt.Printf("SAMITRTCP: Got ReceiverReport packet with ssrc %x\n", rrPacket.DestinationSSRC()[0])
 
 	case TypeSourceDescription:
 		packet = new(SourceDescription)
@@ -122,11 +116,6 @@ func unmarshal(rawData []byte) (packet Packet, bytesprocessed int, err error) {
 
 	case TypeApplicationDefined:
 		packet = new(ApplicationDefined)
-
-		appPacket := ApplicationDefined{}
-		appPacket.Unmarshal(inPacket)
-
-		fmt.Printf("SAMITRTCP: Got ApplicationDefined packet with ssrc %x\n", appPacket.DestinationSSRC()[0])
 
 	default:
 		packet = new(RawPacket)
