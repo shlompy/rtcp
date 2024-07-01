@@ -9,21 +9,22 @@ import (
 
 // ApplicationDefined represents an RTCP application-defined packet.
 type ApplicationDefined struct {
-	SubType uint8
-	SSRC    uint32
-	Name    string
-	Data    []byte
+	SubType    uint8
+	SenderSSRC uint32
+	MediaSSRC  uint32
+	Name       string
+	Data       []byte
 }
 
 // DestinationSSRC returns the SSRC value for this packet.
 func (a ApplicationDefined) DestinationSSRC() []uint32 {
-	return []uint32{a.SSRC}
+	return []uint32{a.MediaSSRC}
 }
 
 // Marshal serializes the application-defined struct into a byte slice with padding.
 func (a ApplicationDefined) Marshal() ([]byte, error) {
 	dataLength := len(a.Data)
-	if dataLength > 0xFFFF-12 {
+	if dataLength > 0xFFFF-16 {
 		return nil, errAppDefinedDataTooLarge
 	}
 	if len(a.Name) != 4 {
@@ -50,14 +51,15 @@ func (a ApplicationDefined) Marshal() ([]byte, error) {
 
 	rawPacket := make([]byte, packetSize)
 	copy(rawPacket, headerBytes)
-	binary.BigEndian.PutUint32(rawPacket[4:8], a.SSRC)
+	binary.BigEndian.PutUint32(rawPacket[4:8], a.SenderSSRC)
 	copy(rawPacket[8:12], a.Name)
-	copy(rawPacket[12:], a.Data)
+	binary.BigEndian.PutUint32(rawPacket[12:16], a.MediaSSRC)
+	copy(rawPacket[16:], a.Data)
 
 	// Add padding if necessary.
 	if paddingSize > 0 {
 		for i := 0; i < paddingSize; i++ {
-			rawPacket[12+dataLength+i] = byte(paddingSize)
+			rawPacket[16+dataLength+i] = byte(paddingSize)
 		}
 	}
 
@@ -84,7 +86,7 @@ func (a *ApplicationDefined) Unmarshal(rawPacket []byte) error {
 	if err != nil {
 		return err
 	}
-	if len(rawPacket) < 12 {
+	if len(rawPacket) < 16 {
 		return errPacketTooShort
 	}
 
@@ -93,19 +95,20 @@ func (a *ApplicationDefined) Unmarshal(rawPacket []byte) error {
 	}
 
 	a.SubType = header.Count
-	a.SSRC = binary.BigEndian.Uint32(rawPacket[4:8])
+	a.SenderSSRC = binary.BigEndian.Uint32(rawPacket[4:8])
 	a.Name = string(rawPacket[8:12])
+	a.MediaSSRC = binary.BigEndian.Uint32(rawPacket[12:16])
 
 	// Check for padding.
 	paddingSize := 0
 	if header.Padding {
 		paddingSize = int(rawPacket[len(rawPacket)-1])
-		if paddingSize > len(rawPacket)-12 {
+		if paddingSize > len(rawPacket)-16 {
 			return errWrongPadding
 		}
 	}
 
-	a.Data = rawPacket[12 : len(rawPacket)-paddingSize]
+	a.Data = rawPacket[16 : len(rawPacket)-paddingSize]
 
 	return nil
 }
@@ -118,5 +121,5 @@ func (a *ApplicationDefined) MarshalSize() int {
 	if paddingSize == 4 {
 		paddingSize = 0
 	}
-	return 12 + dataLength + paddingSize
+	return 16 + dataLength + paddingSize
 }
